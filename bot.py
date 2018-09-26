@@ -22,10 +22,10 @@ def handle_text(message):
     dialog[message.chat.id] = "constraint"
     resources = ""
     for res in Base.fetch_res_names(message.chat.id):
-        resources += res + "\n"
+        resources += res[0] + "\n"
     products = ""
     for prod in Base.fetch_prod_names(message.chat.id):
-        products += prod + "\n"
+        products += prod[0] + "\n"
 
     bot.send_message(message.chat.id, "Твои ресурсы: \n" + resources + "\n\n" +
                                        "Твои продукты: \n" + products)
@@ -52,8 +52,10 @@ def handle_text(message):
     except sqlite3.Error as e:
         if 'foreign' in e.args:
             bot.send_message(message.chat.id, "Нет такого ресурса/продукта")
+        elif dialog[message.chat.id] == "constraint":
+            bot.send_message(message.chat.id, "Лол, ты что то путаешь")
         else:
-            bot.send_message(message.chat.id, "Такой ресурс уже есть, ало...")
+            bot.send_message(message.chat.id, "Такой уже есть, если ЧО")
     except:
         bot.send_message(message.chat.id, "Нет так не пойдет, братишка")
 
