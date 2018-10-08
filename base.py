@@ -4,6 +4,8 @@ import sqlite3
 def create_tables():
     with sqlite3.connect("base.db") as conn:
         cursor = conn.cursor()
+        cursor.execute("PRAGMA foreign_keys = ON")
+
         cursor.execute("""CREATE TABLE IF NOT EXISTS Resources
                           (userId INT NOT NULL,
                            name TEXT NOT NULL,
@@ -35,55 +37,42 @@ create_tables()
 
 class Base:
     @staticmethod
-    def insert_resource(userId, resourse):
+    def _insert_object(tableName, *values):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
-            cursor.execute("PRAGMA foreign_keys = ON")
-            cursor.execute("""INSERT INTO Resources
-                              VALUES (?, ?, ?)
-                           """, [userId, resourse.name, resourse.count])
+            valStr = "(" + "?, " * (len(values) - 1) + "?)"
+
+            cursor.execute("INSERT INTO " + tableName +
+                           " VALUES " + valStr, values)
             conn.commit()
+
+    @staticmethod
+    def _fetch_object(tableName, colName, userId):
+        with sqlite3.connect("base.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(" SELECT " + colName +
+                           " FROM " + tableName +
+                           " WHERE userId = ?", [userId])
+
+            return cursor.fetchall()
+
+    @staticmethod
+    def insert_resource(userId, resourse):
+        Base._insert_object("Resources", userId, resourse.name, resourse.count)
 
     @staticmethod
     def insert_product(userId, product):
-        with sqlite3.connect("base.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA foreign_keys = ON")
-            cursor.execute("""INSERT INTO Products
-                              VALUES (?, ?, ?)
-                           """, [userId, product.name, product.price])
-            conn.commit()
+        Base._insert_object("Products", userId, product.name, product.price)
 
     @staticmethod
     def insert_constrain(userId, constrain):
-        with sqlite3.connect("base.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA foreign_keys = ON")
-            cursor.execute("""INSERT INTO ProductConstrains
-                               VALUES (?, ?, ?, ?)
-                            """, [userId,
-                                  constrain.product_name,
-                                  constrain.resource_name,
-                                  constrain.res_value])
-            conn.commit()
+        Base._insert_object("Products", userId, constrain.product_name,
+                            constrain.resource_name, constrain.res_value)
 
     @staticmethod
     def fetch_res_names(userId):
-        with sqlite3.connect("base.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA foreign_keys = ON")
-            cursor.execute("""SELECT name FROM Products
-                                     WHERE userId=?
-                                   """, [userId])
-
-            return cursor.fetchall()
+        return Base._fetch_object("Products", "name", userId)
 
     @staticmethod
     def fetch_prod_names(userId):
-        with sqlite3.connect("base.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA foreign_keys = ON")
-            cursor.execute("""SELECT name FROM Resources
-                              WHERE userId=?
-                           """, [userId])
-            return cursor.fetchall()
+        return Base._fetch_object("Resources", "name", userId)
