@@ -6,6 +6,14 @@ def create_tables():
         cursor = conn.cursor()
         cursor.execute("PRAGMA foreign_keys = ON")
 
+        cursor.execute("""CREATE TABLE IF NOT EXISTS Dialogs
+                          (userId INT NOT NULL,
+                           name TEXT NOT NULL DEFAULT 'start',
+                           PRIMARY KEY(userId))
+                       """)
+
+        conn.commit()
+
         cursor.execute("""CREATE TABLE IF NOT EXISTS Resources
                           (userId INT NOT NULL,
                            name TEXT NOT NULL,
@@ -32,22 +40,21 @@ def create_tables():
                            FOREIGN KEY(userId, prodName) REFERENCES Products(userId, name))
                        """)
         conn.commit()
-create_tables()
 
+create_tables()
 
 class Base:
     @staticmethod
-    def _insert_object(tableName, *values):
+    def _insertObject(tableName, *values):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
             valStr = "(" + "?, " * (len(values) - 1) + "?)"
-
             cursor.execute("INSERT INTO " + tableName +
                            " VALUES " + valStr, values)
             conn.commit()
 
     @staticmethod
-    def _fetch_object(tableName, colName, userId):
+    def _fetchObject(tableName, colName, userId):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
             cursor.execute(" SELECT " + colName +
@@ -57,22 +64,47 @@ class Base:
             return cursor.fetchall()
 
     @staticmethod
-    def insert_resource(userId, resourse):
-        Base._insert_object("Resources", userId, resourse.name, resourse.count)
+    def insertResource(userId, resourse):
+        Base._insertObject("Resources", userId, resourse.name, resourse.count)
 
     @staticmethod
-    def insert_product(userId, product):
-        Base._insert_object("Products", userId, product.name, product.price)
+    def insertProduct(userId, product):
+        Base._insertObject("Products", userId, product.name, product.price)
 
     @staticmethod
-    def insert_consumption(userId, consumption):
-        Base._insert_object("ProductConsumptions", userId, consumption.product_name,
+    def insertConsumption(userId, consumption):
+        Base._insertObject("ProductConsumptions", userId, consumption.product_name,
                             consumption.resource_name, consumption.resCons)
 
     @staticmethod
-    def fetch_res_names(userId):
-        return Base._fetch_object("Products", "name", userId)
+    def fetchResNames(userId):
+        return Base._fetchObject("Products", "name", userId)
 
     @staticmethod
-    def fetch_prod_names(userId):
-        return Base._fetch_object("Resources", "name", userId)
+    def fetchProdNames(userId):
+        return Base._fetchObject("Resources", "name", userId)
+
+    @staticmethod
+    def _checkDialog(userId):
+        with sqlite3.connect("base.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(""" SELECT COUNT(*)
+                               FROM Dialogs
+                               WHERE userId=?
+                           """, [userId])
+            if cursor.fetchall()[0][0] == 0:
+                Base._insertObject("Dialogs", userId, 'DEFAULT')
+
+    @staticmethod
+    def getDialog(userId):
+        Base._checkDialog(userId)
+        return Base._fetchObject("Dialogs", "name", userId)[0][0]
+
+    @staticmethod
+    def setDialog(userId, dialog):
+        Base._checkDialog(userId)
+        with sqlite3.connect("base.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(" UPDATE Dialogs " +
+                           " SET name = ? " +
+                           " WHERE userId = ?", [dialog, userId])
