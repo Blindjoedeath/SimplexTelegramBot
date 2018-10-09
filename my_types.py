@@ -9,8 +9,14 @@ class Product:
         self.name = name
         self.price = price
 
-class Constrain:
-    def __init__(self, product_name, resource_name, res_value):
+class ConsumptionRow:
+    def __init__(self, product_name, resource_name, resCons):
         self.product_name = product_name
         self.resource_name = resource_name
-        self.res_value = res_value
+        self.res_value = resCons
+
+class Consumption:
+    def __init__(self, product, resource, resCons):
+        self.product = product
+        self.resource = resource
+        self.resCons = resCons

@@ -17,9 +17,9 @@ def handle_text(message):
     dialog[message.chat.id] = "product"
     bot.send_message(message.chat.id, "Напиши название продукта и цену:")
 
-@bot.message_handler(commands=['add_constraint'])
+@bot.message_handler(commands=['add_consumption'])
 def handle_text(message):
-    dialog[message.chat.id] = "constraint"
+    dialog[message.chat.id] = "consumption"
     resources = ""
     for res in Base.fetch_res_names(message.chat.id):
         resources += res[0] + "\n"
@@ -44,7 +44,7 @@ def handle_text(message):
         elif d == "resource":
             Base.insert_resource(message.chat.id, Resource(lines[0], int(lines[1])))
         else:
-            Base.insert_constrain(message.chat.id, Constrain(lines[0], lines[1], int(lines[2])))
+            Base.insert_consumption(message.chat.id, ConsumptionRow(lines[0], lines[1], int(lines[2])))
         bot.send_message(message.chat.id, "Так держать!")
 
     except ValueError:
@@ -52,7 +52,7 @@ def handle_text(message):
     except sqlite3.Error as e:
         if 'foreign' in e.args:
             bot.send_message(message.chat.id, "Нет такого ресурса/продукта")
-        elif dialog[message.chat.id] == "constraint":
+        elif dialog[message.chat.id] == "consumption":
             bot.send_message(message.chat.id, "Лол, ты что то путаешь")
         else:
             bot.send_message(message.chat.id, "Такой уже есть, если ЧО")

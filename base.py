@@ -22,7 +22,7 @@ def create_tables():
                        """)
         conn.commit()
 
-        cursor.execute("""CREATE TABLE IF NOT EXISTS ProductConstrains
+        cursor.execute("""CREATE TABLE IF NOT EXISTS ProductConsumptions
                           (userId INT NOT NULL,
                            prodName TEXT NOT NULL,
                            resName TEXT NOT NULL,
@@ -65,9 +65,9 @@ class Base:
         Base._insert_object("Products", userId, product.name, product.price)
 
     @staticmethod
-    def insert_constrain(userId, constrain):
-        Base._insert_object("Products", userId, constrain.product_name,
-                            constrain.resource_name, constrain.res_value)
+    def insert_consumption(userId, consumption):
+        Base._insert_object("ProductConsumptions", userId, consumption.product_name,
+                            consumption.resource_name, consumption.resCons)
 
     @staticmethod
     def fetch_res_names(userId):
