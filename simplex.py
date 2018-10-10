@@ -17,7 +17,7 @@ def solve(consumptions):
         lpVar = LpVariable(productName, 0)
         varsAndPrise[lpVar] = prodConsumptions[0].product.price
         for cons in prodConsumptions:
-            combinationDict[cons.resource.name] += lpVar * cons.resNorm
+            combinationDict[cons.resource.name] += lpVar * cons.resCons
 
     for resName, combination in combinationDict.items():
         problem += combination <= list(filter(lambda x: x.resource.name == resName, consumptions))[0].resource.count

@@ -1,10 +1,9 @@
 import sqlite3
-
+from my_types import Resource, Product, ConsumptionRow, Consumption
 
 def create_tables():
     with sqlite3.connect("base.db") as conn:
         cursor = conn.cursor()
-        cursor.execute("PRAGMA foreign_keys = ON")
 
         cursor.execute("""CREATE TABLE IF NOT EXISTS Dialogs
                           (userId INT NOT NULL,
@@ -36,8 +35,8 @@ def create_tables():
                            resName TEXT NOT NULL,
                            resValue INT NOT NULL,
                            PRIMARY KEY(userId, prodName, resName),
-                           FOREIGN KEY(userId, resName) REFERENCES Resources(userId, name),
-                           FOREIGN KEY(userId, prodName) REFERENCES Products(userId, name))
+                           FOREIGN KEY(userId, resName) REFERENCES Resources(userId, name) ON DELETE CASCADE,
+                           FOREIGN KEY(userId, prodName) REFERENCES Products(userId, name) ON DELETE CASCADE)
                        """)
         conn.commit()
 
@@ -45,19 +44,32 @@ create_tables()
 
 class Base:
     @staticmethod
-    def _insertObject(tableName, *values):
+    def _insertObject(tableName, values):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
+
+            cursor.execute("PRAGMA foreign_keys = ON")
+
             valStr = "(" + "?, " * (len(values) - 1) + "?)"
             cursor.execute("INSERT INTO " + tableName +
                            " VALUES " + valStr, values)
             conn.commit()
 
     @staticmethod
-    def _fetchObject(tableName, colName, userId):
+    def _deleteObject(tableName, colNames, colValues):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
-            cursor.execute(" SELECT " + colName +
+            valStr = map(lambda x: x + ' = ?', colNames)
+
+            cursor.execute(" DELETE FROM " + tableName +
+                           " WHERE " + ' AND '.join(valStr), colValues)
+            conn.commit()
+
+    @staticmethod
+    def _fetchObject(tableName, userId, colNames):
+        with sqlite3.connect("base.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(" SELECT " + ', '.join(colNames) +
                            " FROM " + tableName +
                            " WHERE userId = ?", [userId])
 
@@ -65,46 +77,38 @@ class Base:
 
     @staticmethod
     def insertResource(userId, resourse):
-        Base._insertObject("Resources", userId, resourse.name, resourse.count)
+        Base._insertObject("Resources", [userId, resourse.name, resourse.count])
 
     @staticmethod
     def insertProduct(userId, product):
-        Base._insertObject("Products", userId, product.name, product.price)
+        Base._insertObject("Products", [userId, product.name, product.price])
 
     @staticmethod
     def insertConsumption(userId, consumption):
-        Base._insertObject("ProductConsumptions", userId, consumption.product_name,
-                            consumption.resource_name, consumption.resCons)
+        Base._insertObject("ProductConsumptions", [userId, consumption.prodName,
+                                                   consumption.resName, consumption.resCons])
 
     @staticmethod
-    def fetchResNames(userId):
-        return Base._fetchObject("Products", "name", userId)
+    def fetchResources(userId):
+        return [Resource(x[0], x[1]) for x in Base._fetchObject("Resources", userId, ["name", "value"])]
 
     @staticmethod
-    def fetchProdNames(userId):
-        return Base._fetchObject("Resources", "name", userId)
+    def fetchProducts(userId):
+        return [Product(x[0], x[1]) for x in Base._fetchObject("Products", userId, ["name", "price"])]
 
     @staticmethod
-    def _checkDialog(userId):
-        with sqlite3.connect("base.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute(""" SELECT COUNT(*)
-                               FROM Dialogs
-                               WHERE userId=?
-                           """, [userId])
-            if cursor.fetchall()[0][0] == 0:
-                Base._insertObject("Dialogs", userId, 'DEFAULT')
+    def fetchConsumptionRows(userId):
+        return [ConsumptionRow(x[0], x[1], x[2]) for x in Base._fetchObject("ProductConsumptions", userId, ["prodName",
+                                                                            "resName", "resValue"])]
 
     @staticmethod
-    def getDialog(userId):
-        Base._checkDialog(userId)
-        return Base._fetchObject("Dialogs", "name", userId)[0][0]
+    def deleteResource(userId, resName):
+        Base._deleteObject('Resources', ['userId', 'name'], [userId, resName])
 
     @staticmethod
-    def setDialog(userId, dialog):
-        Base._checkDialog(userId)
-        with sqlite3.connect("base.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute(" UPDATE Dialogs " +
-                           " SET name = ? " +
-                           " WHERE userId = ?", [dialog, userId])
+    def deleteProduct(userId, prodName):
+        Base._deleteObject('Products', ['userId', 'name'], [userId, prodName])
+
+    @staticmethod
+    def deleteConsumptionRow(userId, prodName, resName):
+        Base._deleteObject('ProductConsumptions', ['userId', 'prodName', 'resName'], [userId, prodName, resName])
