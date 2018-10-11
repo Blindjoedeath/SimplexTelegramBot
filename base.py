@@ -47,9 +47,7 @@ class Base:
     def _insertObject(tableName, values):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
-
             cursor.execute("PRAGMA foreign_keys = ON")
-
             valStr = "(" + "?, " * (len(values) - 1) + "?)"
             cursor.execute("INSERT INTO " + tableName +
                            " VALUES " + valStr, values)
@@ -59,8 +57,8 @@ class Base:
     def _deleteObject(tableName, colNames, colValues):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
             valStr = map(lambda x: x + ' = ?', colNames)
-
             cursor.execute(" DELETE FROM " + tableName +
                            " WHERE " + ' AND '.join(valStr), colValues)
             conn.commit()
