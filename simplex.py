@@ -33,9 +33,3 @@ def solve(consumptions):
         profit += price * var.value()
     result += "\nИтоговая прибыль: " + str(profit)
     return result
-
-
-
-
-    return result
-
