@@ -3,6 +3,7 @@ from telebot import types
 import secret
 from base import *
 from my_types import  *
+import simplex
 
 bot = telebot.TeleBot(secret.token)
 
@@ -19,7 +20,8 @@ def handle_text(message):
 
 def mainKeyboardHandler(message):
     if message.text == 'Решить!':
-        #
+        bot.register_next_step_handler(message, mainKeyboardHandler)
+        bot.send_message(message.chat.id, simplex.solve(Base.fetchConsumptions(message.chat.id)))
         return
 
     keyboard = types.ReplyKeyboardMarkup()

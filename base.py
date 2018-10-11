@@ -66,12 +66,12 @@ class Base:
             conn.commit()
 
     @staticmethod
-    def _fetchObject(tableName, userId, colNames):
+    def _fetchObject(tableName, userId, colNames, where = ''):
         with sqlite3.connect("base.db") as conn:
             cursor = conn.cursor()
             cursor.execute(" SELECT " + ', '.join(colNames) +
                            " FROM " + tableName +
-                           " WHERE userId = ?", [userId])
+                           " WHERE " + where + "userId = ?", [userId])
 
             return cursor.fetchall()
 
@@ -100,6 +100,14 @@ class Base:
     def fetchConsumptionRows(userId):
         return [ConsumptionRow(x[0], x[1], x[2]) for x in Base._fetchObject("ProductConsumptions", userId, ["prodName",
                                                                             "resName", "resValue"])]
+    @staticmethod
+    def fetchConsumptions(userId):
+        return [Consumption(Product(x[0], x[1]), Resource(x[2], x[3]), x[4]) for x in
+                Base._fetchObject("""ProductConsumptions
+		                            LEFT Join Products On prodName = Products.name
+		                            LEFT Join Resources On resName = Resources.name""",
+                                    userId, ['prodName', 'Products.price', 'resName', 'Resources.value',  'resValue'],
+                                    "ProductConsumptions.")]
 
     @staticmethod
     def deleteResource(userId, resName):

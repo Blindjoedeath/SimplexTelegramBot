@@ -26,6 +26,16 @@ def solve(consumptions):
     problem += sum([x * varsAndPrise[x] for x in varsAndPrise])
     problem.solve()
 
-    for var in varsAndPrise.keys():
-        print(var.name + " : " + str(var.value()))
+    result = 'План:\n\n'
+    profit = 0
+    for var, price in varsAndPrise.items():
+        result += var.name + "   :   " + str(var.value()) + "\n"
+        profit += price * var.value()
+    result += "\nИтоговая прибыль: " + str(profit)
+    return result
+
+
+
+
+    return result
 
